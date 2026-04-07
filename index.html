@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FC San Bernardo - Colección Oficial</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial Black', Gadget, sans-serif;
+            background: radial-gradient(circle, #0d1b2a 0%, #000000 100%);
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            margin: 0; padding: 20px; color: white; box-sizing: border-box;
+            transition: background 1.5s ease;
+        }
+        body.gold-mode { background: radial-gradient(circle, #bf953f, #fcf6ba, #aa771c); }
+        .container {
+            background: rgba(13, 27, 42, 0.9); backdrop-filter: blur(10px);
+            padding: 2rem; border-radius: 25px; box-shadow: 0 0 50px rgba(0, 119, 182, 0.5);
+            text-align: center; border: 2px solid #0077b6; width: 100%; max-width: 450px;
+        }
+        h1 { margin: 10px 0 25px 0; font-size: clamp(1.5rem, 5vw, 2.2rem); text-shadow: 2px 2px #000; }
+        input {
+            width: 85%; padding: 15px; border-radius: 50px; border: 2px solid #00b4d8;
+            background: #1b263b; color: white; font-size: 1.1rem; text-align: center;
+            margin-bottom: 5px; outline: none;
+        }
+        #mensajeError { color: #ff4d4d; font-size: 0.9rem; min-height: 20px; margin-bottom: 10px; opacity: 0; font-family: sans-serif; font-weight: bold; transition: 0.3s; }
+        button {
+            background: linear-gradient(45deg, #0077b6, #00b4d8);
+            color: white; border: none; padding: 15px 40px; border-radius: 50px;
+            cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s;
+        }
+        #contenedorCromo { margin-top: 30px; display: none; animation: bounceIn 0.8s ease forwards; }
+        .cromo-img { width: 100%; border-radius: 15px; border: 6px solid #fff; box-shadow: 0 15px 35px rgba(0,0,0,0.8); }
+        .jugador-info {
+            background: #fff; color: #0d1b2a; padding: 8px 15px; margin-top: -20px;
+            position: relative; font-weight: bold; border-radius: 8px; display: inline-block;
+        }
+        @keyframes bounceIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<audio id="audioGol" src="https://www.soundjay.com/misc/sounds/stadium-cheer-01.mp3"></audio>
+
+<div class="container">
+    <div style="color: #00b4d8; font-size: 0.7rem; letter-spacing: 2px;">COLECCIÓN OFICIAL</div>
+    <h1>FC SAN BERNARDO</h1>
+    <input type="text" id="codigoInput" placeholder="INGRESA EL CÓDIGO">
+    <div id="mensajeError"></div>
+    <button onclick="visualizarCromo()">REVELAR JUGADOR</button>
+    <div id="contenedorCromo">
+        <img src="" id="imagenCromo" class="cromo-img">
+        <br>
+        <div id="nombreJugador" class="jugador-info"></div>
+        <p style="margin-top: 20px; font-size: 0.8rem; color: #00b4d8;">Perteneciente a los jugadores del FC San Bernardo</p>
+    </div>
+</div>
+
+<script>
+    function mostrarError(mensaje) {
+        const errorDiv = document.getElementById('mensajeError');
+        errorDiv.innerText = mensaje;
+        errorDiv.style.opacity = '1';
+        setTimeout(() => { errorDiv.style.opacity = '0'; }, 3000);
+    }
+
+    function visualizarCromo() {
+        const codigoInput = document.getElementById('codigoInput');
+        const codigo = codigoInput.value.trim().toUpperCase();
+        const contenedor = document.getElementById('contenedorCromo');
+        const imagen = document.getElementById('imagenCromo');
+        const nombre = document.getElementById('nombreJugador');
+        const cuerpo = document.body;
+
+        if (codigo === "") {
+            mostrarError("¡Debes escribir un código!");
+            return;
+        }
+
+        fetch('/buscar', { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ codigo: codigo }) 
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data) {
+                imagen.src = data.img; 
+                nombre.innerText = data.nombre;
+                contenedor.style.display = "block";
+                
+                // Efectos especiales
+                if (codigo === 'D1') {
+                    cuerpo.classList.add('gold-mode');
+                    document.getElementById('audioGol').play();
+                    confetti({ particleCount: 150, spread: 70, colors: ['#ffd700', '#ffffff'] });
+                } else {
+                    cuerpo.classList.remove('gold-mode');
+                    confetti({ particleCount: 100, spread: 60 });
+                }
+            } else {
+                contenedor.style.display = "none";
+                cuerpo.classList.remove('gold-mode');
+                mostrarError("Código incorrecto. Intenta con D1 o SB4");
+            }
+        })
+        .catch(err => {
+            mostrarError("Error de conexión con el servidor");
+            console.error(err);
+        });
+    }
+</script>
+</body>
+</html>
